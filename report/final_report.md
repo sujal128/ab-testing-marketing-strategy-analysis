@@ -1,399 +1,112 @@
-# A/B Testing & Marketing Strategy Analysis
+# A/B Testing & Marketing Strategy Analysis — Final Report
 
-## Executive Summary
-
-This analysis evaluated the effectiveness of a digital advertising campaign by comparing user conversion performance between an Advertisement (Ad) group and a Public Service Announcement (PSA) control group.
-
-The experiment included 588,101 users and was designed to determine whether advertising generated a measurable increase in conversion rates.
-
-### Key Findings
-
-| Metric | Value |
-|----------|----------:|
-| Total Users | 588,101 |
-| Ad Conversion Rate | 2.555% |
-| PSA Conversion Rate | 1.785% |
-| Absolute Lift | +0.770 Percentage Points |
-| Relative Lift | +43.1% |
-| Statistical Significance | p < 0.001 |
-| Recommendation | Deploy Advertising Campaign |
-
-The advertising campaign delivered a statistically significant and practically meaningful improvement in conversion performance, supporting a full rollout of the strategy.
+**Prepared by:** Sujal Singh
+**Dataset:** Marketing A/B Testing (588,101 users)
 
 ---
 
-# Business Objective
+## 1. The Question We're Actually Answering
 
-Marketing teams invest significant resources in advertising campaigns, but campaign effectiveness must be validated before large-scale deployment.
+A marketing team wants to know if their ad campaign is worth the spend, or if they're just paying to show ads to people who would've converted anyway. That's the real question behind every A/B test like this — not "did conversions go up," but "did *the ads* cause it, and is the effect big enough to act on."
 
-The objective of this experiment was to determine whether exposure to advertisements increases user conversion rates compared to a control experience.
+Here, the company ran two groups: one saw the actual ad campaign (564,577 users), the other saw a public service announcement instead (23,524 users) — a neutral placeholder ad that doesn't promote the product. That PSA group is the control. It's a smart setup, because it isolates the effect of *this specific ad*, not just "seeing any ad at all."
 
-### Business Question
+**Hypotheses:**
+- H0: Ad exposure has no effect on conversion rate (Ad conversion rate = PSA conversion rate)
+- H1: Ad exposure changes conversion rate
 
-Does showing advertisements result in a higher conversion rate than showing public service announcements?
+**Significance threshold:** α = 0.05
 
----
-
-# Experimental Design
-
-Users were randomly assigned to one of two groups:
-
-| Group | Description |
-|----------|----------|
-| Ad | Users exposed to advertisements |
-| PSA | Users exposed to public service announcements |
-
-### Hypotheses
-
-**Null Hypothesis (H₀)**
-
-There is no difference in conversion rates between the Ad and PSA groups.
-
-**Alternative Hypothesis (H₁)**
-
-The Ad group achieves a higher conversion rate than the PSA group.
+**Test used:** Two-proportion z-test. This isn't a t-test problem — we're not comparing two averages of a continuous number, we're comparing two proportions (converted vs. not, in each group). Using a t-test here is the single most common mistake I see in A/B testing writeups, so it's worth stating explicitly that this was a deliberate choice, not a default.
 
 ---
 
-# Dataset Overview
+## 2. Before Trusting Any Result, I Checked If the Test Was Even Valid
 
-| Metric | Value |
-|----------|----------:|
-| Total Records | 588,101 |
-| Ad Group Users | 564,577 |
-| PSA Group Users | 23,524 |
-| Missing Values | 0 |
-| Duplicate Users | 0 |
+This is the step most people skip, and it's the one I'd defend hardest if asked about it in an interview.
 
-### Features
+If the 564,577 / 23,524 split happened by accident — say, a bug in the randomization that pushed more users into one bucket than intended — then nothing downstream matters, because the comparison itself is broken. So before looking at conversion rates at all, I ran a Sample Ratio Mismatch check: a chi-square goodness-of-fit test comparing the actual group sizes against what they should be.
 
-- user_id
-- test_group
-- converted
-- total_ads
-- most_ads_day
-- most_ads_hour
+**Result:** χ² = 0.0000, p = 0.9998
+
+That p-value sitting almost exactly at 1.0 isn't a coincidence — it's exactly what you want to see. It means the split lines up with what was intended, no hidden bias in how users got bucketed. I also checked for missing values and duplicate users — zero of each. Clean dataset, valid randomization. Green light to move forward.
+
+If this check had failed, the honest move would've been to stop here and flag the randomization process for investigation, not push ahead and report a misleading result. That's the difference between running a test and actually trusting one.
 
 ---
 
-# Data Quality Validation
-
-Before conducting statistical analysis, data quality and experiment integrity were validated.
-
-## Missing Values
-
-No missing values were detected.
-
-## Duplicate Records
-
-No duplicate users were identified.
-
-## Sample Ratio Mismatch (SRM) Test
-
-Sample Ratio Mismatch testing was conducted to verify the integrity of experiment randomization.
-
-| Metric | Value |
-|----------|----------:|
-| Chi-Square Statistic | 0.0000 |
-| P-Value | 0.9998 |
-
-### Conclusion
-
-No evidence of Sample Ratio Mismatch was observed.
-
-The randomization process appears valid, allowing the experiment results to be interpreted with confidence.
-
----
-
-# Conversion Analysis
-
-## Overall Performance
+## 3. What Actually Happened
 
 | Group | Users | Conversions | Conversion Rate |
-|----------|----------:|----------:|----------:|
+|---|---|---|---|
 | Ad | 564,577 | 14,423 | 2.555% |
 | PSA | 23,524 | 420 | 1.785% |
 
-### Conversion Lift
+On the surface, that's a 0.77 percentage point gap — small in absolute terms, but a **43.1% relative lift**. That distinction matters: a jump from 1.785% to 2.555% sounds unremarkable until you frame it as "almost half again as many people converted." Both framings are true. I'm including both because whichever one a stakeholder hears first tends to anchor how big they think the effect is, and I'd rather hand over both numbers than let someone pick the flattering one.
+
+---
+
+## 4. Is This Real, or Just Noise?
+
+Two-proportion z-test:
 
 | Metric | Value |
-|----------|----------:|
-| Absolute Lift | 0.770 Percentage Points |
-| Relative Lift | 43.1% |
+|---|---|
+| Z statistic | 7.3701 |
+| p-value | 1.705 × 10⁻¹³ |
 
-### Interpretation
+That p-value is not a typo — it's genuinely that small. With 588K users, even a modest difference in conversion rate becomes statistically obvious very fast. **Reject the null.** The ads are doing something.
 
-Users exposed to advertisements converted at a substantially higher rate than users exposed to public service announcements.
-
-The observed improvement represents a meaningful increase in marketing effectiveness.
-
----
-
-# Statistical Validation
-
-## Two-Proportion Z-Test
+I also ran a chi-square test of independence as a second check (campaign type vs. conversion outcome), partly to confirm the z-test result, partly because it's good practice not to lean on a single test when the sample is this large:
 
 | Metric | Value |
-|----------|----------:|
-| Z Statistic | 7.3701 |
-| P-Value | 1.705e-13 |
+|---|---|
+| χ² statistic | 54.0058 |
+| p-value | 1.999 × 10⁻¹³ |
 
-### Decision
+Same conclusion, different angle. Good — that's the kind of agreement that makes a result easy to defend rather than something I'd hedge on.
 
-The null hypothesis is rejected.
+**95% Confidence Interval for the lift:** 0.595% – 0.943%
 
-The probability that the observed difference occurred by random chance is extremely low.
+This is the number I'd actually put in front of a decision-maker, more than the p-value. The p-value tells you the effect is real; the confidence interval tells you how big it probably is. Even at the low end of that range, you're still looking at a meaningful lift — the interval doesn't come anywhere close to crossing zero.
 
----
+**Statistical power:** 1.00 (effect size ≈ 0.053)
 
-## Confidence Interval
-
-A 95% confidence interval was calculated for the conversion lift.
-
-| Lower Bound | Upper Bound |
-|----------|----------:|
-| 0.595% | 0.943% |
-
-### Interpretation
-
-The true conversion improvement generated by advertising is estimated to lie between 0.595% and 0.943%.
-
-Because the entire confidence interval is positive, the result remains favorable across all plausible outcomes.
+With this sample size, if there were *any* meaningful difference between groups, this test was essentially guaranteed to catch it. Worth saying directly: a result this clean is partly a function of having 588K users, not just a function of the ad being amazing. A smaller company running the same test on 5,000 users might not see a result this crisp even with the same true effect — sample size buys you certainty, it doesn't manufacture the effect itself.
 
 ---
 
-## Chi-Square Test
+## 5. The Part of the Data That Actually Changes the Recommendation
 
-| Metric | Value |
-|----------|----------:|
-| Chi-Square Statistic | 54.0058 |
-| P-Value | 1.999e-13 |
+This is where I think the analysis gets more interesting than "ads work, ship it." I broke conversion rate down by how many ads each user was actually exposed to:
 
-### Conclusion
+| Exposure Level | Ad Conversion | PSA Conversion |
+|---|---|---|
+| Low | 0.258% | 0.303% |
+| Medium | 0.774% | 0.787% |
+| High | 6.787% | 4.367% |
 
-A statistically significant relationship exists between campaign exposure and conversion behavior.
+Look at the low and medium rows first — Ad and PSA are basically tied, and PSA is actually *slightly* ahead in both. The entire 43.1% lift we calculated earlier isn't spread evenly across the user base. It's almost entirely coming from the high-exposure segment, where Ad pulls meaningfully ahead of PSA (6.79% vs 4.37%).
 
----
-
-# Power Analysis
-
-| Metric | Value |
-|----------|----------:|
-| Effect Size | 0.053 |
-| Statistical Power | 1.00 |
-
-### Interpretation
-
-The experiment had sufficient sample size to reliably detect the observed effect.
-
-The risk of failing to identify a true conversion improvement is extremely low.
+That changes what "deploy the ad campaign" should actually mean. If I'd stopped at the headline z-test result, the natural recommendation is "run more ads, broadly." But the segmented view says something more specific: the campaign isn't really moving people who see it once or twice — it's working on people who see it repeatedly. That's a frequency/retargeting story, not a reach story.
 
 ---
 
-# User Segmentation Analysis
+## 6. Recommendation
 
-To better understand campaign performance, users were segmented according to advertisement exposure levels.
+**Don't read this as "the campaign works, scale it everywhere."** Read it as: the campaign works specifically for users who get enough exposure to it, and that's the lever worth pulling.
 
-## Conversion Rate by Exposure Segment
+**What I'd actually tell the marketing team:**
 
-| Exposure Level | Ad | PSA |
-|----------|----------:|----------:|
-| Low Exposure | 0.258% | 0.303% |
-| Medium Exposure | 0.774% | 0.787% |
-| High Exposure | 6.787% | 4.367% |
+1. **Keep the campaign running** — the lift is real, statistically solid, and the confidence interval doesn't get close to zero even in the worst case.
+2. **Don't optimize for reach, optimize for frequency.** Spreading the same budget thinner across more low-exposure users is likely to underperform compared to concentrating spend on getting existing high-intent users to a higher exposure threshold.
+3. **Treat the low/medium exposure result as a flag, not a footnote.** Those segments show no real advantage over the PSA — meaning a chunk of current ad spend may be going to users who were never going to be moved by it. Worth investigating whether that spend could be reallocated rather than assumed to be working just because the topline number is positive.
+4. **Next test:** rather than re-running the same Ad vs. PSA comparison, I'd test exposure thresholds directly — e.g., capped-frequency ad delivery vs. uncapped — to find the point where additional exposure stops paying off. Right now we know "more exposure = more lift" trends upward, but we don't know where it plateaus, and that's the number that actually informs a budget decision.
 
-### Key Insight
-
-The strongest conversion gains were observed among highly exposed users.
-
-While low- and medium-exposure segments exhibited similar performance across groups, the high-exposure segment generated a substantial increase in conversion rate under the advertising campaign.
-
-This suggests that advertising effectiveness increases as user exposure grows.
+**Caveat worth stating plainly:** this dataset doesn't include cost-per-impression or campaign spend, so everything above is about whether the ad changes behavior — not whether it's profitable. A 43% relative lift that costs more to achieve than the converted users are worth wouldn't be worth shipping, and that's a separate calculation this dataset can't answer on its own.
 
 ---
 
-# Business Impact Assessment
+## Tech Notes
 
-To estimate practical impact, conversion rates were applied to a hypothetical audience of 100,000 users.
-
-| Scenario | Expected Conversions |
-|----------|----------:|
-| PSA Campaign | 1,785 |
-| Advertising Campaign | 2,555 |
-| Additional Conversions | 770 |
-
-### Interpretation
-
-For every 100,000 users reached, the advertising campaign is expected to generate approximately 770 additional conversions compared to the control campaign.
-
-This demonstrates that the observed statistical improvement also translates into meaningful business value.
-
----
-
-# Business Recommendation
-
-## Recommendation
-
-Deploy the advertising campaign.
-
-## Supporting Evidence
-
-- Higher conversion rate than the control group
-- 43.1% relative improvement
-- Strong statistical significance
-- Positive confidence interval
-- Sufficient experimental power
-- Strong performance among highly exposed users
-
-## Strategic Implications
-
-Marketing teams should continue investing in advertising while monitoring exposure frequency to maximize campaign effectiveness.
-
-Additional experimentation should focus on identifying the optimal balance between user engagement and advertising frequency.
-
----
-
-# Limitations
-
-While the experiment provides strong evidence supporting advertising effectiveness, several limitations should be considered:
-
-- Revenue per conversion was not available.
-- Customer lifetime value was not measured.
-- Long-term retention effects were not evaluated.
-- Exposure frequency optimization was outside the scope of the experiment.
-
-Future analyses should incorporate financial and retention metrics to quantify total business impact.
-
----
-
-# Recommended Next Experiments
-
-1. Test alternative advertisement creatives.
-2. Evaluate different advertisement frequencies.
-3. Compare performance across user segments.
-4. Measure revenue uplift instead of conversion uplift alone.
-5. Assess long-term customer retention after conversion.
-
----
-
-# Conclusion
-
-The analysis demonstrates that advertising significantly improves user conversion performance compared to the control experience.
-
-The campaign achieved a 43.1% relative improvement in conversion rate, passed all statistical validation tests, and generated meaningful business impact.
-
-Based on the evidence, the advertising strategy should be deployed and further optimized through targeted experimentation.| Ad | 564,577 | 14,423 | 2.555% |
-| PSA | 23,524 | 420 | 1.785% |
-
-### Improvement
-
-Absolute Lift:
-
-0.770 percentage points
-
-Relative Lift:
-
-43.1%
-
-The advertisement group generated a substantially higher conversion rate than the PSA group.
-
----
-
-## Statistical Testing
-
-### Two-Proportion Z-Test
-
-Z Statistic: 7.3701
-
-P-Value: 1.705e-13
-
-Decision:
-
-Reject the null hypothesis.
-
-### 95% Confidence Interval
-
-Lower Bound: 0.595%
-
-Upper Bound: 0.943%
-
-Interpretation:
-
-The true conversion uplift from advertising is estimated to lie between 0.595% and 0.943%.
-
----
-
-## Chi-Square Test
-
-Chi-Square Statistic: 54.0058
-
-P-Value: 1.999e-13
-
-Conclusion:
-
-A statistically significant relationship exists between campaign type and conversion outcome.
-
----
-
-## Power Analysis
-
-Effect Size: 0.053
-
-Statistical Power: 1.00
-
-Interpretation:
-
-The sample size is more than sufficient to detect the observed effect.
-
----
-
-## Segmented Analysis
-
-Users were divided into:
-
-- Low Exposure
-- Medium Exposure
-- High Exposure
-
-### Conversion Rates by Exposure
-
-| Exposure Level | Ad | PSA |
-|----------|----------:|----------:|
-| Low Exposure | 0.258% | 0.303% |
-| Medium Exposure | 0.774% | 0.787% |
-| High Exposure | 6.787% | 4.367% |
-
-### Key Insight
-
-The largest performance improvement occurs among highly exposed users.
-
-Advertising delivers the greatest value when users are exposed to a larger number of advertisements.
-
----
-
-## Business Recommendation
-
-### Recommendation
-
-Roll out the advertising campaign.
-
-### Supporting Evidence
-
-- Ad conversion rate: 2.555%
-- PSA conversion rate: 1.785%
-- Relative lift: 43.1%
-- Statistically significant result (p < 0.001)
-- Confidence interval entirely positive
-- High statistical power
-
-### Strategic Insight
-
-Future marketing efforts should focus on increasing effective ad exposure while monitoring user fatigue and campaign costs.
-
----
-
-## Conclusion
-
-The analysis demonstrates that the advertisement campaign significantly outperforms the PSA campaign. Both statistical and practical significance support deploying the advertising strategy at scale.
-
-The strongest gains are observed among highly exposed users, suggesting that optimized ad frequency can further improve business outcomes.
+Two-proportion z-test and chi-square test via `statsmodels` / `scipy.stats`. Power analysis via `statsmodels.stats.power`. Full code in `notebooks/` and `src/stats_utils.py`.
